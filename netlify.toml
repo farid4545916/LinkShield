@@ -1,0 +1,10 @@
+# LinkShield's deployable static site is the landing page in docs/
+# (the same folder the GitHub Pages workflow publishes). It is plain,
+# self-contained HTML, so no build step is required.
+#
+# The Flask application under server/ is a long-running Python server
+# (gunicorn + SQLAlchemy + background worker) and is deployed separately
+# via Docker / Fly.io as described in the README.
+[build]
+  command = ""
+  publish = "docs"

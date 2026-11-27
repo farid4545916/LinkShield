@@ -8,6 +8,7 @@ Flask-Caching==2.3.0
 Werkzeug==3.0.1
 SQLAlchemy>=2.0.25
 alembic==1.13.2
+psycopg[binary]==3.2.13
 python-dotenv==1.0.1
 requests==2.31.0
 email-validator==2.1.0.post1
