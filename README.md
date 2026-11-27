@@ -1,154 +1,128 @@
-# UrlTrack
+# LinkShield
 
-[![GitHub Pages](https://img.shields.io/badge/demo-live-2ea44f?style=for-the-badge&logo=githubpages&logoColor=white)](https://mn-company.github.io/UrlTrack/)
 [![Python](https://img.shields.io/badge/Python-Flask-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-ready-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Gemini](https://img.shields.io/badge/Gemini-AI%20Analyst-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
 [![Docker](https://img.shields.io/badge/Docker-supported-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![License](https://img.shields.io/github/license/MN-company/UrlTrack?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/github/license/farid4545916/LinkShield?style=for-the-badge)](LICENSE)
 
-**Self-hosted link intelligence for analytics, routing, and traffic quality.**
+**Self-hosted link intelligence, traffic analytics, and access protection.**
 
-UrlTrack turns ordinary links into a controlled intelligence layer. It combines
-short links, access gates, visitor analytics, bot and VPN filtering, lead
-history, exports, and optional AI analysis in one deployable application.
+LinkShield transforms ordinary URLs into an intelligent traffic management layer. It combines link shortening, visitor analytics, conditional routing, bot and VPN detection, lead tracking, notifications, and optional AI-powered analysis in one self-hosted application.
 
-The project was built around a practical problem: most shorteners are useful
-for click counts, but weak when a team needs to understand traffic quality,
-segment visitors, protect destinations, and keep the data on infrastructure it
-controls.
+Built for marketers, website owners, agencies, and teams that need greater visibility and control over their incoming traffic.
 
-**[Open the interactive website](https://mn-company.github.io/UrlTrack/)**
+## What LinkShield Does
 
-## What it solves
+- **Traffic Intelligence:** Analyze visitors, identify suspicious traffic, and distinguish potentially automated activity from normal visits.
+- **Smart Routing:** Apply password, CAPTCHA, email, consent, country, schedule, and device-based access conditions.
+- **Campaign Analytics:** Connect links, visits, visitor signals, and lead activity in a centralized dashboard.
+- **Access Protection:** Control how visitors reach protected destinations.
+- **Data Ownership:** Host your own application and maintain control over your campaign information.
+- **Integrations:** Export data and connect external systems through webhooks, email, and Telegram notifications.
 
-- **Traffic quality**: identify bots, scanners, VPN/proxy traffic, repeat
-  visitors, and suspicious sessions before treating a click as useful signal.
-- **Controlled routing**: send visitors through password, CAPTCHA, email,
-  consent, country, schedule, and device checks before redirecting.
-- **Campaign intelligence**: connect links, visits, fingerprints, emails, and
-  lead activity into a reviewable timeline.
-- **Operational ownership**: run the application yourself instead of depending
-  on a hosted analytics dashboard or opaque third-party shortener.
-- **Exportable evidence**: move campaign data into CSV, JSON, PDF, webhooks,
-  email workflows, or Telegram alerts.
+## Core Features
 
-## Core capabilities
-
-- Short-link creation with destination protection and fallback redirects
-- Visual routing flows for gates, conditions, splits, and notifications
-- Visitor fingerprinting based on browser and device signals, with ThumbmarkJS
-  used as the foundation for client-side fingerprint collection
-- Bot, scanner, VPN, proxy, and hosting-provider checks
-- Workspace separation, invitations, roles, TOTP, and passkey support
-- Lead and visit timelines with device profiles and campaign-level analytics
-- Optional Gemini-powered AI Analyst for scoped natural-language exploration of
-  campaign data
-- CSV, JSON, and PDF exports
-- Telegram, SMTP email, and signed webhook integrations
-- Python/Flask backend with SQLAlchemy, Alembic migrations, server-rendered UI,
-  Docker support, and optional Supabase integration
+- Short-link creation and destination management.
+- Visual routing flows with conditions, access gates, splits, and notifications.
+- Browser and device fingerprint collection.
+- Bot, scanner, VPN, proxy, and hosting-provider checks.
+- Workspaces, invitations, roles, and authentication security features.
+- Visitor and lead timelines.
+- Campaign-level analytics and dashboards.
+- Optional Gemini-powered AI Analyst.
+- CSV, JSON, and PDF exports.
+- Telegram alerts, SMTP email, and signed webhooks.
+- Flask backend, SQLAlchemy, Alembic migrations, and Docker support.
+- Optional Supabase integration.
 
 ## Architecture
 
-The public redirect path is kept lightweight while slower enrichment work runs
-in the background. Visitors move through the required checks without waiting for
-scoring, notifications, or external integrations to finish.
+The redirect process is designed to remain lightweight. Additional analysis, notifications, and external integrations can run in the background.
 
-- Server-rendered Flask pages with minimal browser overhead
-- SQLAlchemy models and Alembic migrations
-- Background enrichment for risk scoring, alerts, and webhooks
-- Local sessions by default, with optional Supabase-backed authentication
-- Docker and script-based setup paths
-- Optional AI layer kept separate from core redirect and analytics logic
+- Flask server-rendered application.
+- SQLAlchemy database models.
+- Alembic database migrations.
+- Background processing for enrichment and notifications.
+- Local authentication with optional Supabase integration.
+- Docker deployment support.
+- Optional AI analysis independent of the core tracking system.
 
-## How it works
+## How It Works
 
 ```mermaid
 flowchart LR
-    A["Visitor opens the link"] --> B["Bot and request checks"]
-    B --> C{"Access gates"}
-    C -->|Passed| D["Record visit immediately"]
-    C -->|Rejected| E["Stop / GhostRedirect to safe URL"]
-    D --> F["Fast redirect"]
-    D -.-> G["Background enrichment"]
-    G --> H["Scoring and notifications"]
+    A["Visitor opens a link"] --> B["Traffic checks"]
+    B --> C{"Access conditions"}
+    C -->|Approved| D["Record visit"]
+    C -->|Rejected| E["Stop or redirect to fallback"]
+    D --> F["Redirect to destination"]
+    D -.-> G["Background analysis"]
+    G --> H["Risk scoring and notifications"]
 ```
 
-Rejected traffic can be stopped or routed to a harmless fallback URL while
-eligible traffic continues to the protected destination. This keeps the
-destination out of the rejected flow and makes the link useful for legitimate
-analytics, campaign safety, and controlled access.
+The routing system can stop rejected traffic or send it to a fallback destination. These mechanisms provide an additional layer of control, but do not guarantee detection of every automated visitor or crawler.
 
-### Destination protection comparison
+## Destination Protection
 
-| UrlTrack protected flow | Typical URL inspection tool |
+| LinkShield protected flow | Typical URL inspection tool |
 | --- | --- |
-| ![UrlTrack keeps the protected destination private in the rejected flow](our.png) | ![Comparison tools expose the final destination](others.png) |
+| ![LinkShield protected destination](our.png) | ![Comparison](others.png) |
 
-The exact result depends on the client and configuration; this is a defensive
-layer rather than a guarantee against every crawler.
+Actual behavior depends on the visitor's browser, configuration, and the detection methods available.
 
-## Demo
+## Screenshots
 
 ### Campaign Command Center
 
-Monitor campaign health, identity confidence, risk, interceptions, and active
-links from one operational view.
+Monitor campaign activity, traffic quality, risk indicators, and active links.
 
-![UrlTrack Campaign Command Center](demo-dashboard.png)
+![LinkShield Campaign Command Center](demo-dashboard.png)
 
-### Routing flow builder
+### Routing Flow Builder
 
-Build visual routing flows with triggers, conditions, access gates, splits,
-fallback destinations, and real-time notifications.
+Create visual routing workflows with conditions, access gates, fallback destinations, and notifications.
 
-![UrlTrack GateFlow Studio](demo-flow-studio.png)
+![LinkShield Routing Flow Builder](demo-flow-studio.png)
 
-## Quick start
+## Installation
 
-### Installer
+### Requirements
 
-The fastest way to run UrlTrack locally is:
+- Python 3
+- pip
+- Python virtual environment support
+
+### Linux Installation
 
 ```bash
-git clone https://github.com/MN-company/UrlTrack.git
-cd UrlTrack
+git clone https://github.com/farid4545916/LinkShield.git
+cd LinkShield
 ./install.sh --run
 ```
 
-The installer creates `.env` when needed, generates a secret key, prepares a
-virtual environment, installs dependencies, applies migrations, and starts the
-application.
+Open:
 
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000), then create the first
-owner account at `/register`.
+http://127.0.0.1:8000
 
-### Docker Compose
+Create the first owner account at `/register`.
+
+### Docker Installation
 
 ```bash
-git clone https://github.com/MN-company/UrlTrack.git
-cd UrlTrack
+git clone https://github.com/farid4545916/LinkShield.git
+cd LinkShield
 ./install.sh --docker --run
 ```
 
-To prepare the environment without starting it immediately:
+Alternatively:
 
 ```bash
 ./install.sh --docker
 docker compose up --build
 ```
 
-The container applies Alembic migrations on boot and runs Gunicorn on port
-`8000`. SQLite data is persisted in `server/data/`.
-
-### Manual installation
-
-Requirements:
-
-- Python 3
-- `pip` and `venv`
-- a supported SQLAlchemy database; SQLite is the default
+### Manual Installation
 
 ```bash
 python3 -m venv venv
@@ -159,130 +133,84 @@ SKIP_BACKGROUND_WORKER=1 python -m flask --app server:create_app db upgrade
 ./run.sh
 ```
 
-Minimal configuration:
+Configure the environment variables in `.env` according to `.env.example`.
 
-```env
-SECRET_KEY=replace-with-a-long-random-value
-SERVER_URL=http://127.0.0.1:8000
-DATABASE_URL=sqlite:///data/urltrack.db
-```
+## First-Run Checklist
 
-## First-run checklist
-
-1. Open `/register` and create the first owner.
-2. Name the initial workspace.
-3. Create a link and choose the gates required for its audience.
-4. Confirm that `SERVER_URL` matches the public base URL.
-5. Enable TOTP or register a passkey from Security settings.
-6. Configure retention, proxy trust, and integrations before production use.
-
-Further users join by invitation. Workspace roles are `viewer`, `analyst`,
-`editor`, `admin`, and `owner`.
+1. Open `/register`.
+2. Create the initial owner account.
+3. Set up your workspace.
+4. Create your first tracking link.
+5. Configure the required access conditions.
+6. Verify the public server URL.
+7. Review security, privacy, and data-retention settings.
+8. Configure optional integrations.
 
 ## Integrations
 
-UrlTrack works as a standalone application, but its most useful integrations
-are built directly into the normal campaign workflow.
-
 ### Supabase
 
-Connect Supabase to add managed authentication while preserving UrlTrack's
-local sessions, workspaces, roles, passkeys, and security settings. Teams can
-start with local accounts and introduce Supabase when the installation grows,
-without changing how campaigns and analytics are organized.
+Optional Supabase integration for managed authentication.
 
 ### AI Analyst
 
-The AI Analyst turns campaign data into a searchable operational view. It can
-reason over visits, links, fingerprints, IP addresses, emails, and leads using
-scoped references, while streaming responses directly in the interface.
+The optional AI Analyst uses campaign information to support natural-language exploration and analysis.
 
-The analysis layer is designed to remain separate from tracking and can be
-extended to different model providers. Gemini support is included out of the
-box, and AI remains completely optional: links and analytics continue to work
-when no model is configured.
+Gemini support is included. AI functionality is optional and is not required for the core application.
 
-### Notifications and webhooks
+### Notifications and Webhooks
 
 ```mermaid
 flowchart LR
     A["New visit"] --> B["Background worker"]
     B --> C["Telegram alert"]
     B --> D["Signed webhook"]
-    B --> E["Email workflow"]
-    C --> F["Your team"]
-    D --> G["CRM or automation"]
-    E --> F
+    B --> E["Email notification"]
 ```
 
-- **Telegram** delivers real-time visit alerts and campaign updates.
-- **Email via SMTP** handles team invitations and collaborative workflows.
-- **Signed webhooks** forward events to CRMs, internal tools, or automation
-  platforms.
+Available integrations include:
 
-Integrations can be configured per workspace, allowing separate teams to use
-their own destinations and credentials. None of them are required for the core
-redirect and analytics flow.
+- Telegram notifications.
+- SMTP email.
+- Signed webhooks for external applications and automation platforms.
 
-## Project status
+## Project Status
 
-UrlTrack is under active development. The core redirect, gating, analytics,
-workspace, lead, export, and authentication flows are present, while advanced
-correlation and AI-assisted features should be treated as experimental. Data
-models and configuration may change between releases until a stable versioning
-policy is introduced.
+LinkShield is under active development.
 
-Current areas of work include:
+The application includes link management, routing, visitor analytics, authentication, workspace management, exports, and integrations. Some advanced traffic correlation and AI-assisted capabilities should be considered experimental until further testing and validation.
 
-- improving documentation and deployment examples
-- expanding automated coverage for dashboard workflows
-- refining visitor scoring and identity correlation
-- making privacy and retention controls easier to audit
-- improving observability for background enrichment jobs
-
-This section is intentionally a direction rather than a release promise.
+Features, configuration, and database structures may change as development progresses.
 
 ## Troubleshooting
 
-### The wrong application starts or `/` returns an unexpected response
-
-Use the repository virtual environment explicitly and stop stale development
-processes:
+### Database migration issues
 
 ```bash
-pkill -f "flask --app server:create_app run" || true
-./venv/bin/python -m flask --app server:create_app run --host=127.0.0.1 --port=8000
+python -m flask --app server:create_app db upgrade
 ```
 
-### `flask db` reports that the command does not exist
-
-```bash
-./venv/bin/python -m flask --app server:create_app db upgrade
-```
-
-### Telegram notifications do not arrive
-
-Check that the bot token and chat ID are correct and that the target chat has
-sent at least one message to the bot.
-
-### Docker starts with dependency warnings
-
-Check whether migrations completed and Gunicorn started successfully:
+### Docker startup issues
 
 ```bash
 docker compose ps
 docker compose logs --tail=200
 ```
 
-## Responsible use
+### Telegram notifications not arriving
 
-UrlTrack is provided for educational, research, and legitimate analytics use.
-It is not designed to establish a person's real-world identity, bypass consent,
-or facilitate harassment, surveillance, credential collection, or unauthorized
-access. Operators are responsible for informing visitors where required,
-collecting valid consent, minimizing retained data, and securing their
-deployment.
+Check the bot token, chat ID, and bot permissions.
+
+## Responsible Use and Privacy
+
+LinkShield is intended for legitimate traffic analytics, access management, and campaign monitoring.
+
+Operators are responsible for complying with applicable privacy laws, obtaining consent where required, minimizing retained personal data, and securing their deployments.
+
+LinkShield does not guarantee detection of every bot, proxy, VPN, or automated visitor.
 
 ## License
 
-Distributed under the terms in [LICENSE](LICENSE).
+This project is distributed under the terms of the [MIT License](LICENSE).
+
+The original upstream project attribution and license terms remain applicable.
