@@ -1,5 +1,6 @@
-from . import create_app
-
+```python
+from server import create_app
 
 app = create_app()
 application = app
+```
