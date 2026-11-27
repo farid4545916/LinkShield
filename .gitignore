@@ -22,3 +22,6 @@ legacy_backup/
 # IDE
 .idea/
 .vscode/
+
+# Local Netlify folder
+.netlify

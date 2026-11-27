@@ -40,13 +40,42 @@ def _int_env(name: str, default: int) -> int:
         return default
 
 
+def _normalize_database_url(url: str) -> str:
+    """Pin PostgreSQL URLs (Supabase, Fly, Render...) to the psycopg 3 driver.
+
+    Providers hand out ``postgres://`` or ``postgresql://`` URLs. SQLAlchemy
+    rejects the first form and picks a driver for the second depending on its
+    version, so both are rewritten to the explicitly installed driver.
+    """
+    url = (url or "").strip()
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
+def _engine_options(url: str) -> dict:
+    if not url.startswith("postgresql"):
+        return {}
+    return {
+        # Drop connections closed by the server or a pooler before using them.
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "pool_size": _int_env("DB_POOL_SIZE", 5),
+        "max_overflow": _int_env("DB_MAX_OVERFLOW", 5),
+        # Server-side prepared statements break behind Supabase's transaction
+        # pooler (port 6543); disabling them is harmless on direct connections.
+        "connect_args": {"prepare_threshold": None},
+    }
+
+
 _load_dotenv()
 
 
 @dataclass(frozen=True)
 class Config:
     SECRET_KEY: str = os.environ["SECRET_KEY"]
-    DATABASE_URL: str = os.getenv("DATABASE_URL", DEFAULT_DB_URI)
+    DATABASE_URL: str = _normalize_database_url(os.getenv("DATABASE_URL") or DEFAULT_DB_URI)
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     SERVER_URL: str = os.getenv("SERVER_URL", "http://127.0.0.1:8000")
@@ -57,6 +86,11 @@ class Config:
     TURNSTILE_SITE_KEY: str = os.getenv("TURNSTILE_SITE_KEY", "")
     TURNSTILE_SECRET_KEY: str = os.getenv("TURNSTILE_SECRET_KEY", "")
     TRUST_PROXY_HEADERS: bool = _bool_env("TRUST_PROXY_HEADERS", False)
+    # Number of reverse proxies in front of the app (1 for Fly.io/Render, 2 if
+    # Cloudflare also sits in front). Used to find the real visitor IP.
+    TRUSTED_PROXY_HOPS: int = max(1, _int_env("TRUSTED_PROXY_HOPS", 1))
+    # Optional ip-api.com Pro key: HTTPS, no 45 req/min cap, commercial use allowed.
+    IP_API_KEY: str = os.getenv("IP_API_KEY", "")
     ANONYMIZE_IP: bool = _bool_env("ANONYMIZE_IP", True)
     REQUIRE_CONSENT: bool = _bool_env("REQUIRE_CONSENT", False)
     ALLOW_PARTIAL_EMAIL_CAPTURE: bool = _bool_env("ALLOW_PARTIAL_EMAIL_CAPTURE", False)
@@ -94,6 +128,7 @@ class Config:
             "consent",
             "favicon.ico",
             "robots.txt",
+            "healthz",
         }
     )
     PERMANENT_SESSION_LIFETIME: timedelta = timedelta(hours=24)
@@ -107,6 +142,7 @@ class Config:
         return {
             "SECRET_KEY": config.SECRET_KEY,
             "SQLALCHEMY_DATABASE_URI": config.DATABASE_URL,
+            "SQLALCHEMY_ENGINE_OPTIONS": _engine_options(config.DATABASE_URL),
             "SQLALCHEMY_TRACK_MODIFICATIONS": config.SQLALCHEMY_TRACK_MODIFICATIONS,
             "SESSION_COOKIE_SECURE": config.SESSION_COOKIE_SECURE,
             "SESSION_COOKIE_HTTPONLY": config.SESSION_COOKIE_HTTPONLY,
@@ -126,6 +162,7 @@ class Config:
             "TURNSTILE_SITE_KEY": config.TURNSTILE_SITE_KEY,
             "TURNSTILE_SECRET_KEY": config.TURNSTILE_SECRET_KEY,
             "TRUST_PROXY_HEADERS": config.TRUST_PROXY_HEADERS,
+            "TRUSTED_PROXY_HOPS": config.TRUSTED_PROXY_HOPS,
             "ANONYMIZE_IP": config.ANONYMIZE_IP,
             "VISIT_RETENTION_DAYS": config.VISIT_RETENTION_DAYS,
             "VISIT_TOKEN_TTL_SECONDS": config.VISIT_TOKEN_TTL_SECONDS,
