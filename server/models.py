@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from flask_login import UserMixin
@@ -173,9 +173,12 @@ class User(UserMixin, DatabaseModel):
     totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     backup_codes: Mapped[Optional[str]] = mapped_column(Text)
     passkey_credentials: Mapped[Optional[str]] = mapped_column(Text)
-is_subscribed: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    is_subscribed: Mapped[bool] = mapped_column(Boolean, default=False)
     whop_user_id: Mapped[Optional[str]] = mapped_column(String(128), index=True)
     whop_membership_id: Mapped[Optional[str]] = mapped_column(String(128), index=True)
+    subscription_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
     @property
     def passkeys(self) -> List[Dict[str, Any]]:
         return _safe_json_loads(self.passkey_credentials, [])
@@ -187,6 +190,21 @@ is_subscribed: Mapped[bool] = mapped_column(Boolean, default=False)
     @property
     def backup_code_hashes(self) -> List[str]:
         return _safe_json_loads(self.backup_codes, [])
+
+    def has_active_subscription(self) -> bool:
+        if not self.is_subscribed:
+            return False
+        if self.subscription_expires_at is None:
+            return True
+        now = datetime.utcnow()
+        exp = self.subscription_expires_at
+        if exp.tzinfo is not None:
+            exp = exp.astimezone(timezone.utc).replace(tzinfo=None)
+        if now >= exp:
+            self.is_subscribed = False
+            db.session.commit()
+            return False
+        return True
 
 
 class SetupState(DatabaseModel):
