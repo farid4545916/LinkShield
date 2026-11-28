@@ -1,10 +1,11 @@
+from functools import wraps
 import io
 from pathlib import Path
 
 import segno
 from dotenv import set_key
 from flask import Blueprint, current_app, flash, make_response, redirect, render_template, request, url_for
-from flask_login import login_required
+from flask_login import current_user, login_required
 from sqlalchemy import distinct, func
 
 from ...config import BASE_DIR, Config
@@ -12,6 +13,18 @@ from ...extensions import cache, db
 from ...models import Link, Visit
 from ...utils import invalidate_domain_cache, sanitize, shorten_with_isgd
 from ...validators import normalize_destination_url, normalize_optional_url, parse_bool, validate_slug
+
+
+def subscription_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for("auth.login"))
+        if not hasattr(current_user, "has_active_subscription") or not current_user.has_active_subscription():
+            flash("Votre abonnement est expiré ou inactif. Veuillez renouveler pour continuer.", "warning")
+            return redirect("/subscribe")
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 bp = Blueprint("dashboard_links", __name__)
@@ -95,6 +108,7 @@ def links():
 
 @bp.route("/create", methods=["POST"])
 @login_required
+@subscription_required
 def create_link():
     slug = sanitize(request.form.get("slug"), 20)
     destination = sanitize(request.form.get("destination"), 2048)
@@ -142,6 +156,7 @@ def create_link():
 
 @bp.route("/create_full", methods=["GET", "POST"])
 @login_required
+@subscription_required
 def create_full():
     if request.method == "POST":
         slug = sanitize(request.form.get("slug"), 20)
@@ -184,6 +199,7 @@ def create_full():
 
 @bp.route("/delete/<int:link_id>", methods=["POST"])
 @login_required
+@subscription_required
 def delete_link(link_id: int):
     link = db.session.get(Link, link_id)
     if link is not None:
@@ -197,6 +213,7 @@ def delete_link(link_id: int):
 
 @bp.route("/edit/<slug>", methods=["GET", "POST"])
 @login_required
+@subscription_required
 def edit_link(slug: str):
     link = Link.query.filter_by(slug=slug).first_or_404()
 
