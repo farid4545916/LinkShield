@@ -173,7 +173,9 @@ class User(UserMixin, DatabaseModel):
     totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     backup_codes: Mapped[Optional[str]] = mapped_column(Text)
     passkey_credentials: Mapped[Optional[str]] = mapped_column(Text)
-
+is_subscribed: Mapped[bool] = mapped_column(Boolean, default=False)
+    whop_user_id: Mapped[Optional[str]] = mapped_column(String(128), index=True)
+    whop_membership_id: Mapped[Optional[str]] = mapped_column(String(128), index=True)
     @property
     def passkeys(self) -> List[Dict[str, Any]]:
         return _safe_json_loads(self.passkey_credentials, [])
