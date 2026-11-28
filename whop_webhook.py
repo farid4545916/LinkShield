@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, redirect, request
 
 whop_bp = Blueprint("whop_webhook", __name__)
 
@@ -15,6 +15,15 @@ def _exempt_csrf(state):
         csrf_ext = state.app.extensions.get("csrf")
         if csrf_ext is not None and hasattr(csrf_ext, "exempt"):
             csrf_ext.exempt(whop_webhook)
+
+
+@whop_bp.route("/subscribe", methods=["GET"])
+def subscribe():
+    checkout_url = os.environ.get(
+        "WHOP_CHECKOUT_URL",
+        "https://whop.com/traficclair1/linkshield-2d/",
+    ).strip()
+    return redirect(checkout_url, code=302)
 
 
 @whop_bp.route("/webhooks/whop", methods=["POST"])
