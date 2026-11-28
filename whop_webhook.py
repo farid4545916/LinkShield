@@ -1,5 +1,5 @@
-import hmac
 import hashlib
+import hmac
 import os
 from flask import Blueprint, jsonify, redirect, request
 
@@ -70,7 +70,7 @@ def whop_webhook():
     payload = request.get_json(silent=True) or {}
     event_type = payload.get("event") or payload.get("type") or payload.get("action") or ""
 
-   if event_type == "membership.activated":
+    if event_type == "membership.activated":
         email, whop_user_id, membership_id = _extract_member_info(payload)
         user_updated = False
 
@@ -104,16 +104,6 @@ def whop_webhook():
             "event": event_type,
             "activated": True,
             "user_updated": user_updated,
-            "email": email,
-            "whop_user_id": whop_user_id,
-            "membership_id": membership_id,
-            "has_secret": bool(secret),
-            "has_signature": bool(signature),
-        }), 200
-        return jsonify({
-            "received": True,
-            "event": event_type,
-            "activated": True,
             "email": email,
             "whop_user_id": whop_user_id,
             "membership_id": membership_id,
