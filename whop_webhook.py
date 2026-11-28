@@ -49,6 +49,33 @@ def _extract_member_info(payload: dict) -> tuple[str | None, str | None, str | N
     )
 
 
+def _set_subscription_status(
+    email: str | None,
+    whop_user_id: str | None,
+    membership_id: str | None,
+    active: bool,
+) -> bool:
+    from server.extensions import db
+    from server.models import User
+
+    user = None
+    if whop_user_id:
+        user = User.query.filter_by(whop_user_id=whop_user_id).first()
+    if not user and email:
+        user = User.query.filter(User.email.ilike(email)).first()
+
+    if not user:
+        return False
+
+    user.is_subscribed = active
+    if whop_user_id:
+        user.whop_user_id = whop_user_id
+    if membership_id:
+        user.whop_membership_id = membership_id
+    db.session.commit()
+    return True
+
+
 @whop_bp.route("/subscribe", methods=["GET"])
 def subscribe():
     checkout_url = os.environ.get(
@@ -70,28 +97,20 @@ def whop_webhook():
     payload = request.get_json(silent=True) or {}
     event_type = payload.get("event") or payload.get("type") or payload.get("action") or ""
 
-    if event_type == "membership.activated":
+    activate_events = {"membership.activated", "payment.succeeded"}
+    deactivate_events = {"membership.deactivated", "membership.expired", "membership.cancelled"}
+
+    if event_type in activate_events or event_type in deactivate_events:
         email, whop_user_id, membership_id = _extract_member_info(payload)
-        user_updated = False
+        is_active = event_type in activate_events
 
         try:
-            from server.extensions import db
-            from server.models import User
-
-            user = None
-            if whop_user_id:
-                user = User.query.filter_by(whop_user_id=whop_user_id).first()
-            if not user and email:
-                user = User.query.filter(User.email.ilike(email)).first()
-
-            if user:
-                user.is_subscribed = True
-                if whop_user_id:
-                    user.whop_user_id = whop_user_id
-                if membership_id:
-                    user.whop_membership_id = membership_id
-                db.session.commit()
-                user_updated = True
+            user_updated = _set_subscription_status(
+                email=email,
+                whop_user_id=whop_user_id,
+                membership_id=membership_id,
+                active=is_active,
+            )
         except Exception as exc:
             return jsonify({
                 "received": False,
@@ -102,7 +121,7 @@ def whop_webhook():
         return jsonify({
             "received": True,
             "event": event_type,
-            "activated": True,
+            "activated": is_active,
             "user_updated": user_updated,
             "email": email,
             "whop_user_id": whop_user_id,
